@@ -4,34 +4,34 @@ A complete finance management app for small businesses built with Flutter and SQ
 
 ## Features
 
-### 📊 Dashboard
+###  Dashboard
 - View total balance (Income - Expense)
 - Quick view of income and expense totals
 - Quick actions to add income/expense
 - Recent transactions list
 - Beautiful pineapple-themed UI
 
-### 💰 Transactions
+###  Transactions
 - Add income and expense transactions
 - Categorize transactions (Food, Transport, Shopping, Bills, Salary, Business, etc.)
 - View all transactions with filters (All, Income, Expense)
 - Delete transactions
 - View transaction details with date and description
 
-### 📦 Stock Management
+###  Stock Management
 - Add stock items with name and quantity
 - Edit existing stock items
 - Delete stock items
 - View all stock items with dates
 
-### 📈 Analytics
+###  Analytics
 - Visual pie chart showing Income vs Expense
 - Category-wise expense breakdown with percentages
 - Category-wise income breakdown with percentages
 - Total transaction count
 - Net balance summary
 
-### 👤 Profile
+###  Profile
 - View user profile information
 - Account settings (Coming soon)
 - Notifications settings (Coming soon)
@@ -39,7 +39,7 @@ A complete finance management app for small businesses built with Flutter and SQ
 - Help & Support (Coming soon)
 - Logout functionality
 
-### 🔐 Authentication
+###  Authentication
 - User registration
 - User login
 - Session management with SharedPreferences
