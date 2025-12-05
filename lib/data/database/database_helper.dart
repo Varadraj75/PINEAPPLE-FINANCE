@@ -86,6 +86,16 @@ class DatabaseHelper {
     return null;
   }
 
+  Future<int> updateUserPassword(String email, String newPassword) async {
+    final db = await database;
+    return await db.update(
+      'users',
+      {'password': newPassword},
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+  }
+
   // Transaction operations
   Future<int> createTransaction(TransactionModel transaction) async {
     final db = await database;

@@ -26,6 +26,24 @@ class AuthService {
     }
   }
 
+  Future<bool> checkEmailExists(String email) async {
+    try {
+      final user = await DatabaseHelper.instance.getUserByEmail(email);
+      return user != null;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> resetPassword(String email, String newPassword) async {
+    try {
+      final result = await DatabaseHelper.instance.updateUserPassword(email, newPassword);
+      return result > 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<UserModel?> login(String email, String password) async {
     try {
       final user = await DatabaseHelper.instance.getUserByEmail(email);

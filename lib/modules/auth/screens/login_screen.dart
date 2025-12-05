@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passController = TextEditingController();
   bool isLoading = false;
+  bool showResetOption = false;
 
   void _login() async {
     if (emailController.text.isEmpty || passController.text.isEmpty) {
@@ -41,23 +42,98 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } else {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Login Failed'),
-            content: const Text(
-                'Invalid email or password. Please check your credentials or register a new account.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
+
+      // Check if email exists to determine if we should show reset option
+      final emailExists = await AuthService.instance.checkEmailExists(emailController.text.trim());
+      
+      if (emailExists) {
+        setState(() => showResetOption = true);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Incorrect password. You can reset it below.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } else {
+        setState(() => showResetOption = false);
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Login Failed'),
+              content: const Text(
+                  'Invalid email or password. Please check your credentials or register a new account.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
       }
     }
+  }
+
+  void _showResetPasswordDialog() {
+    final newPassController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Enter your new password below:'),
+            const SizedBox(height: 10),
+            TextField(
+              controller: newPassController,
+              decoration: const InputDecoration(
+                labelText: 'New Password',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange),
+            onPressed: () async {
+              if (newPassController.text.trim().isNotEmpty) {
+                Navigator.pop(context);
+                final success = await AuthService.instance.resetPassword(
+                  emailController.text.trim(),
+                  newPassController.text,
+                );
+                
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(success 
+                        ? 'Password reset successfully! Please login.' 
+                        : 'Failed to reset password.'),
+                      backgroundColor: success ? Colors.green : Colors.red,
+                    ),
+                  );
+                  if (success) {
+                    setState(() => showResetOption = false);
+                  }
+                }
+              }
+            },
+            child: const Text('Reset', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -110,6 +186,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   : const Text("Login",
                       style: TextStyle(fontSize: 18, color: Colors.white)),
             ),
+
+            if (showResetOption) ...[
+              const SizedBox(height: 10),
+              Center(
+                child: TextButton(
+                  onPressed: _showResetPasswordDialog,
+                  child: const Text(
+                    "Forgot Password? Reset Here",
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
 
             const SizedBox(height: 20),
 
