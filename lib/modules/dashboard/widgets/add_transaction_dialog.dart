@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pineapple_finance/core/theme/app_colors.dart';
+// import 'package:pineapple_finance/core/theme/app_colors.dart';
 import 'package:pineapple_finance/data/database/database_helper.dart';
 import 'package:pineapple_finance/data/models/transaction_model.dart';
 
