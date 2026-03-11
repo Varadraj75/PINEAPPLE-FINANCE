@@ -19,13 +19,11 @@ class DatabaseHelper {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
-
     return await openDatabase(
       path,
       version: 2,
       onCreate: _createDB,
       onUpgrade: (db, oldVersion, newVersion) async {
-        // Clear all tables on upgrade
         await db.execute('DROP TABLE IF EXISTS users');
         await db.execute('DROP TABLE IF EXISTS transactions');
         await db.execute('DROP TABLE IF EXISTS stocks');
@@ -43,7 +41,6 @@ class DatabaseHelper {
         password TEXT NOT NULL
       )
     ''');
-
     await db.execute('''
       CREATE TABLE transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,7 +52,6 @@ class DatabaseHelper {
         description TEXT
       )
     ''');
-
     await db.execute('''
       CREATE TABLE stocks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,7 +62,6 @@ class DatabaseHelper {
     ''');
   }
 
-  // User operations
   Future<int> createUser(UserModel user) async {
     final db = await database;
     return await db.insert('users', user.toMap());
@@ -74,15 +69,8 @@ class DatabaseHelper {
 
   Future<UserModel?> getUserByEmail(String email) async {
     final db = await database;
-    final maps = await db.query(
-      'users',
-      where: 'email = ?',
-      whereArgs: [email],
-    );
-
-    if (maps.isNotEmpty) {
-      return UserModel.fromMap(maps.first);
-    }
+    final maps = await db.query('users', where: 'email = ?', whereArgs: [email]);
+    if (maps.isNotEmpty) return UserModel.fromMap(maps.first);
     return null;
   }
 
@@ -96,7 +84,6 @@ class DatabaseHelper {
     );
   }
 
-  // Transaction operations
   Future<int> createTransaction(TransactionModel transaction) async {
     final db = await database;
     return await db.insert('transactions', transaction.toMap());
@@ -131,7 +118,6 @@ class DatabaseHelper {
     return result.first['total'] as double? ?? 0.0;
   }
 
-  // Stock operations
   Future<int> createStock(StockModel stock) async {
     final db = await database;
     return await db.insert('stocks', stock.toMap());

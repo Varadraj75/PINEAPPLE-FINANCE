@@ -9,19 +9,11 @@ class AuthService {
   Future<bool> register(String name, String email, String password) async {
     try {
       final existingUser = await DatabaseHelper.instance.getUserByEmail(email);
-      if (existingUser != null) {
-        return false;
-      }
-
-      final user = UserModel(
-        name: name,
-        email: email,
-        password: password,
-      );
-
+      if (existingUser != null) return false;
+      final user = UserModel(name: name, email: email, password: password);
       await DatabaseHelper.instance.createUser(user);
       return true;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
@@ -30,7 +22,7 @@ class AuthService {
     try {
       final user = await DatabaseHelper.instance.getUserByEmail(email);
       return user != null;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
@@ -39,7 +31,7 @@ class AuthService {
     try {
       final result = await DatabaseHelper.instance.updateUserPassword(email, newPassword);
       return result > 0;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
@@ -55,7 +47,7 @@ class AuthService {
         return user;
       }
       return null;
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }

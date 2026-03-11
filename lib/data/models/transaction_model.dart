@@ -2,7 +2,7 @@ class TransactionModel {
   final int? id;
   final String title;
   final double amount;
-  final String type; // 'income' or 'expense'
+  final String type;
   final String category;
   final DateTime date;
   final String? description;

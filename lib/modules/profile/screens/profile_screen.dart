@@ -1,261 +1,89 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:pineapple_finance/core/theme/app_colors.dart';
 import 'package:pineapple_finance/data/services/auth_service.dart';
-import '../../intro/screens/intro_screen.dart';
+import 'package:pineapple_finance/modules/profile/controllers/profile_controller.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  String userName = '';
-  String userEmail = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
-    final name = await AuthService.instance.getUserName();
-    final email = await AuthService.instance.getUserEmail();
-
-    setState(() {
-      userName = name ?? 'User';
-      userEmail = email ?? 'user@example.com';
-    });
-  }
-
-  void _showChangePasswordDialog() {
-    final currentPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Change Password'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: currentPasswordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Current Password',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: newPasswordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'New Password',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: confirmPasswordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Confirm New Password',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.orange,
-            ),
-            onPressed: () {
-              if (newPasswordController.text.isEmpty ||
-                  currentPasswordController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please fill all fields')),
-                );
-                return;
-              }
-
-              if (newPasswordController.text !=
-                  confirmPasswordController.text) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Passwords do not match')),
-                );
-                return;
-              }
-
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Password changed successfully!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
-            child: const Text('Change',
-                style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _logout() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () async {
-              await AuthService.instance.logout();
-              if (context.mounted) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const IntroScreen()),
-                  (route) => false,
-                );
-              }
-            },
-            child: const Text('Logout', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final c = Get.put(ProfileController());
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
           const SizedBox(height: 20),
-
-          // Profile Avatar
-          CircleAvatar(
-            radius: 60,
-            backgroundColor: AppColors.yellow,
-            child: Text(
-              userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-              style: const TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-
+          Obx(() => CircleAvatar(
+                radius: 60,
+                backgroundColor: AppColors.yellow,
+                child: Text(
+                  c.userName.value.isNotEmpty ? c.userName.value[0].toUpperCase() : 'U',
+                  style: const TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              )),
           const SizedBox(height: 16),
-
-          // User Name
-          Text(
-            userName,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
+          Obx(() => Text(
+                c.userName.value,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              )),
           const SizedBox(height: 8),
-
-          // User Email
-          Text(
-            userEmail,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
-          ),
-
+          Obx(() => Text(
+                c.userEmail.value,
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              )),
           const SizedBox(height: 32),
-
-          // Profile Options
-          _buildProfileOption(
+          _option(
             icon: Icons.info,
             title: 'About',
             subtitle: 'App version and information',
-            onTap: () {
-              showAboutDialog(
-                context: context,
-                applicationName: 'Pineapple Finance',
-                applicationVersion: '1.0.0',
-                applicationIcon:
-                    const Icon(Icons.star, size: 48, color: AppColors.orange),
-                children: [
-                  const Text('Simple finance management for small businesses'),
-                ],
-              );
-            },
+            onTap: () => showAboutDialog(
+              context: context,
+              applicationName: 'Pineapple Finance',
+              applicationVersion: '1.0.0',
+              applicationIcon: const Icon(Icons.star, size: 48, color: AppColors.orange),
+              children: [const Text('Simple finance management for small businesses')],
+            ),
           ),
-
-          _buildProfileOption(
+          _option(
             icon: Icons.security,
             title: 'Security',
             subtitle: 'Change your password',
-            onTap: () => _showChangePasswordDialog(),
+            onTap: () => _showChangePasswordDialog(c),
           ),
-
-          _buildProfileOption(
+          _option(
             icon: Icons.help,
             title: 'Help & Support',
             subtitle: 'Get help and contact support',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Coming soon!')),
-              );
-            },
+            onTap: () => Get.snackbar('Info', 'Coming soon!'),
           ),
-
           const SizedBox(height: 24),
-
-          // Logout Button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              onPressed: _logout,
+              onPressed: () => _confirmLogout(c),
               icon: const Icon(Icons.logout, color: Colors.white),
-              label: const Text(
-                'Logout',
-                style: TextStyle(fontSize: 16, color: Colors.white),
-              ),
+              label: const Text('Logout', style: TextStyle(fontSize: 16, color: Colors.white)),
             ),
           ),
-
           const SizedBox(height: 32),
         ],
       ),
     );
   }
 
-  Widget _buildProfileOption({
+  Widget _option({
     required IconData icon,
     required String title,
     required String subtitle,
@@ -268,14 +96,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
           backgroundColor: AppColors.yellow.withValues(alpha: 0.3),
           child: Icon(icon, color: AppColors.orange),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,
       ),
+    );
+  }
+
+  void _showChangePasswordDialog(ProfileController c) {
+    final currentPassField = TextEditingController();
+    final newPassField = TextEditingController();
+    final confirmPassField = TextEditingController();
+
+    Get.defaultDialog(
+      title: 'Change Password',
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: currentPassField,
+              obscureText: true,
+              decoration: const InputDecoration(
+                  labelText: 'Current Password', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: newPassField,
+              obscureText: true,
+              decoration: const InputDecoration(
+                  labelText: 'New Password', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: confirmPassField,
+              obscureText: true,
+              decoration: const InputDecoration(
+                  labelText: 'Confirm New Password', border: OutlineInputBorder()),
+            ),
+          ],
+        ),
+      ),
+      textCancel: 'Cancel',
+      textConfirm: 'Change',
+      confirmTextColor: Colors.white,
+      buttonColor: AppColors.orange,
+      onConfirm: () async {
+        if (newPassField.text.isEmpty || currentPassField.text.isEmpty) {
+          Get.snackbar('Error', 'Please fill all fields');
+          return;
+        }
+        if (newPassField.text != confirmPassField.text) {
+          Get.snackbar('Error', 'Passwords do not match');
+          return;
+        }
+        // Current password is validated here before resetting to prevent unauthorised changes.
+        final email = c.userEmail.value;
+        final valid = await AuthService.instance.login(email, currentPassField.text);
+        if (valid == null) {
+          Get.snackbar('Error', 'Current password is incorrect');
+          return;
+        }
+        await AuthService.instance.resetPassword(email, newPassField.text);
+        Get.back();
+        Get.snackbar('Success', 'Password changed successfully!',
+            backgroundColor: Colors.green, colorText: Colors.white);
+      },
+    );
+  }
+
+  void _confirmLogout(ProfileController c) {
+    Get.defaultDialog(
+      title: 'Logout',
+      middleText: 'Are you sure you want to logout?',
+      textCancel: 'Cancel',
+      textConfirm: 'Logout',
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.red,
+      onConfirm: () {
+        Get.back();
+        c.logout();
+      },
     );
   }
 }

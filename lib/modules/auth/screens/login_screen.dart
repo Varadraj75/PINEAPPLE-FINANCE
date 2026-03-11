@@ -1,143 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:pineapple_finance/core/theme/app_colors.dart';
-import 'package:pineapple_finance/data/services/auth_service.dart';
-import '../../dashboard/screens/dashboard_screen.dart';
-import 'register_screen.dart';
+import 'package:pineapple_finance/modules/auth/controllers/auth_controller.dart';
+import 'package:pineapple_finance/routes/app_routes.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  final emailController = TextEditingController();
-  final passController = TextEditingController();
-  bool isLoading = false;
-  bool showResetOption = false;
-
-  void _login() async {
-    if (emailController.text.isEmpty || passController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
-      );
-      return;
-    }
-
-    setState(() => isLoading = true);
-
-    final user = await AuthService.instance.login(
-      emailController.text.trim(),
-      passController.text,
-    );
-
-    setState(() => isLoading = false);
-
-    if (user != null) {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const DashboardScreen()),
-        );
-      }
-    } else {
-
-      // Check if email exists to determine if we should show reset option
-      final emailExists = await AuthService.instance.checkEmailExists(emailController.text.trim());
-      
-      if (emailExists) {
-        setState(() => showResetOption = true);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Incorrect password. You can reset it below.'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-      } else {
-        setState(() => showResetOption = false);
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Login Failed'),
-              content: const Text(
-                  'Invalid email or password. Please check your credentials or register a new account.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  void _showResetPasswordDialog() {
-    final newPassController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Enter your new password below:'),
-            const SizedBox(height: 10),
-            TextField(
-              controller: newPassController,
-              decoration: const InputDecoration(
-                labelText: 'New Password',
-                border: OutlineInputBorder(),
-              ),
-              obscureText: true,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange),
-            onPressed: () async {
-              if (newPassController.text.trim().isNotEmpty) {
-                Navigator.pop(context);
-                final success = await AuthService.instance.resetPassword(
-                  emailController.text.trim(),
-                  newPassController.text,
-                );
-                
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(success 
-                        ? 'Password reset successfully! Please login.' 
-                        : 'Failed to reset password.'),
-                      backgroundColor: success ? Colors.green : Colors.red,
-                    ),
-                  );
-                  if (success) {
-                    setState(() => showResetOption = false);
-                  }
-                }
-              }
-            },
-            child: const Text('Reset', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final controller = Get.find<AuthController>();
+    final emailField = TextEditingController();
+    final passField = TextEditingController();
 
     return Scaffold(
       appBar: AppBar(
@@ -149,70 +23,65 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Welcome Back!",
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-
+            const Text(
+              "Welcome Back!",
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 30),
-
             TextField(
-              controller: emailController,
+              controller: emailField,
+              onChanged: (v) => controller.email.value = v,
               decoration: const InputDecoration(
                 labelText: "Email",
                 border: OutlineInputBorder(),
               ),
             ),
-
             const SizedBox(height: 20),
-
             TextField(
-              controller: passController,
+              controller: passField,
               obscureText: true,
+              onChanged: (v) => controller.password.value = v,
               decoration: const InputDecoration(
                 labelText: "Password",
                 border: OutlineInputBorder(),
               ),
             ),
-
             const SizedBox(height: 30),
-
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange,
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              onPressed: isLoading ? null : _login,
-              child: isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text("Login",
-                      style: TextStyle(fontSize: 18, color: Colors.white)),
-            ),
-
-            if (showResetOption) ...[
-              const SizedBox(height: 10),
-              Center(
-                child: TextButton(
-                  onPressed: _showResetPasswordDialog,
-                  child: const Text(
-                    "Forgot Password? Reset Here",
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
+            Obx(() => ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.orange,
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                  onPressed: controller.isLoading.value ? null : controller.login,
+                  child: controller.isLoading.value
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          "Login",
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
+                )),
+            Obx(() {
+              if (!controller.showResetOption.value) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Center(
+                  child: TextButton(
+                    onPressed: () => _showResetDialog(controller),
+                    child: const Text(
+                      "Forgot Password? Reset Here",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-
+              );
+            }),
             const SizedBox(height: 20),
-
             Center(
               child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                  );
-                },
+                onPressed: () => Get.toNamed(AppRoutes.register),
                 child: const Text(
                   "Don't have an account? Register",
                   style: TextStyle(color: AppColors.orange),
@@ -222,6 +91,36 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showResetDialog(AuthController controller) {
+    final newPassField = TextEditingController();
+    Get.defaultDialog(
+      title: 'Reset Password',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Enter your new password below:'),
+          const SizedBox(height: 10),
+          TextField(
+            controller: newPassField,
+            decoration: const InputDecoration(
+              labelText: 'New Password',
+              border: OutlineInputBorder(),
+            ),
+            obscureText: true,
+          ),
+        ],
+      ),
+      textCancel: 'Cancel',
+      textConfirm: 'Reset',
+      confirmTextColor: Colors.white,
+      buttonColor: AppColors.orange,
+      onConfirm: () {
+        Get.back();
+        controller.resetPassword(newPassField.text);
+      },
     );
   }
 }
